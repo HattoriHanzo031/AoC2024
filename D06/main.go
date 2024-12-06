@@ -3,6 +3,7 @@ package main
 import (
 	"common"
 	"fmt"
+	"iter"
 )
 
 type coord struct {
@@ -43,11 +44,8 @@ func main() {
 
 	obstacles := make(map[coord]bool, 0)
 	start := coord{}
-	//path := make([]coord, 0)
-	path := make(map[coord]bool, 0)
 
 	maxX, maxY := 0, 0
-	direction := up
 	for y, line := range scanner {
 		for x, r := range line {
 			switch r {
@@ -62,20 +60,35 @@ func main() {
 	}
 	fmt.Println("start:", start)
 	fmt.Println("obstacles:", obstacles)
-	cur := start
-	//path = append(path, cur)
-	path[cur] = true
-	for cur.inBounds(maxX, maxY) {
-		next := cur.add(direction)
-		if obstacles[next] {
-			direction = direction.turnRight()
-		} else {
-			cur = next
-			//path = append(path, cur)
-			path[cur] = true
-		}
+
+	path := make(map[coord]bool, 0)
+	for p := range patrol(obstacles, start, maxX, maxY) {
+		path[p] = true
 	}
 
 	fmt.Println("Path:", path)
-	fmt.Println("Length:", len(path)-1)
+	fmt.Println("Length:", len(path))
+}
+
+func patrol(obstacles map[coord]bool, start coord, maxX, maxY int) iter.Seq[coord] {
+	return func(yield func(coord) bool) {
+		cur := start
+		if !yield(cur) {
+			return
+		}
+		direction := up
+		for {
+			next := cur.add(direction)
+			if obstacles[next] {
+				direction = direction.turnRight()
+			} else if !next.inBounds(maxX, maxY) {
+				break
+			} else {
+				cur = next
+				if !yield(cur) {
+					break
+				}
+			}
+		}
+	}
 }
