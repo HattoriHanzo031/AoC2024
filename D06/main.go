@@ -58,25 +58,38 @@ func main() {
 			maxY = max(maxY, y)
 		}
 	}
-	fmt.Println("start:", start)
-	fmt.Println("obstacles:", obstacles)
 
-	path := make(map[coord]bool, 0)
-	for p := range patrol(obstacles, start, maxX, maxY) {
-		path[p] = true
+	path := make(map[coord]coord, 0)
+	for cur, dir := range patrol(obstacles, start, maxX, maxY) {
+		path[cur] = dir
 	}
 
-	fmt.Println("Path:", path)
-	fmt.Println("Length:", len(path))
+	fmt.Println("Path length:", len(path))
+
+	delete(path, start)
+	numLoops := 0
+	for cur := range path {
+		newPath := make(map[coord]coord, 0)
+		obstacles[cur] = true
+		for cur, dir := range patrol(obstacles, start, maxX, maxY) {
+			if newPath[cur] == dir {
+				numLoops++
+				break
+			}
+			newPath[cur] = dir
+		}
+		delete(obstacles, cur)
+	}
+	fmt.Println("Num loops:", numLoops)
 }
 
-func patrol(obstacles map[coord]bool, start coord, maxX, maxY int) iter.Seq[coord] {
-	return func(yield func(coord) bool) {
+func patrol(obstacles map[coord]bool, start coord, maxX, maxY int) iter.Seq2[coord, coord] {
+	return func(yield func(coord, coord) bool) {
 		cur := start
-		if !yield(cur) {
+		direction := up
+		if !yield(cur, direction) {
 			return
 		}
-		direction := up
 		for {
 			next := cur.add(direction)
 			if obstacles[next] {
@@ -85,7 +98,7 @@ func patrol(obstacles map[coord]bool, start coord, maxX, maxY int) iter.Seq[coor
 				break
 			} else {
 				cur = next
-				if !yield(cur) {
+				if !yield(cur, direction) {
 					break
 				}
 			}

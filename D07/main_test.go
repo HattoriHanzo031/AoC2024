@@ -1,12 +1,11 @@
 package main
 
 import (
-	"reflect"
 	"strconv"
 	"testing"
 )
 
-func Test_combineInts(t *testing.T) {
+func Test_combine(t *testing.T) {
 	tests := []struct {
 		first  int
 		second int
@@ -22,64 +21,34 @@ func Test_combineInts(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(strconv.Itoa(tt.first)+" "+strconv.Itoa(tt.second), func(t *testing.T) {
-			if got := combineInts(tt.first, tt.second); got != tt.want {
+			if got := combine(tt.first, tt.second); got != tt.want {
 				t.Errorf("combineInts() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_combine(t *testing.T) {
-	type args struct {
-		operations int
-		operands   []int
-	}
-	tests := []struct {
-		args args
-		want []int
-	}{
-		{args{0b0, []int{1, 2, 3, 4}}, []int{1, 2, 3, 4}},
-		{args{0b1, []int{1, 2, 3, 4}}, []int{12, 3, 4}},
-		{args{0b10, []int{1, 2, 3, 4}}, []int{1, 23, 4}},
-		{args{0b11, []int{1, 2, 3, 4}}, []int{123, 4}},
-		{args{0b100, []int{1, 2, 3, 4}}, []int{1, 2, 34}},
-		{args{0b101, []int{1, 2, 3, 4}}, []int{12, 34}},
-		{args{0b110, []int{1, 2, 3, 4}}, []int{1, 234}},
-		{args{0b111, []int{1, 2, 3, 4}}, []int{1234}},
-	}
-	for _, tt := range tests {
-		t.Run("", func(t *testing.T) {
-			if got := combine(tt.args.operations, tt.args.operands); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("combine() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
+// func combineInts(a, b int) int {
+// 	if b == 0 {
+// 		return a * 10
+// 	}
 
-func Test_calculate(t *testing.T) {
-	type args struct {
-		operations int
-		operands   []int
-	}
-	tests := []struct {
-		name string
-		args args
-		want int
-	}{
-		{"0b000", args{0b000, []int{1, 2, 3, 4}}, 1 + 2 + 3 + 4},
-		{"0b001", args{0b001, []int{1, 2, 3, 4}}, 1*2 + 3 + 4},
-		{"0b010", args{0b010, []int{1, 2, 3, 4}}, (1+2)*3 + 4},
-		{"0b011", args{0b011, []int{1, 2, 3, 4}}, 1*2*3 + 4},
-		{"0b100", args{0b100, []int{1, 2, 3, 4}}, (1 + 2 + 3) * 4},
-		{"0b101", args{0b101, []int{1, 2, 3, 4}}, (1*2 + 3) * 4},
-		{"0b110", args{0b110, []int{1, 2, 3, 4}}, (1 + 2) * 3 * 4},
-		{"0b111", args{0b111, []int{1, 2, 3, 4}}, 1 * 2 * 3 * 4},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := calculate(tt.args.operations, tt.args.operands); got != tt.want {
-				t.Errorf("calculate() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
+// 	numDigits := 0
+// 	reversed := 0
+// 	for b > 0 {
+// 		reversed = reversed*10 + b%10
+// 		b /= 10
+// 		numDigits++
+// 	}
+
+// 	for range numDigits {
+// 		a = a*10 + reversed%10
+// 		reversed /= 10
+// 	}
+// 	return a
+// }
+
+// func combineLog(a, b int) int {
+// 	numDigits := int(math.Floor(math.Log10(float64(b))) + 1)
+// 	return a*int(math.Pow10(numDigits)) + b
+// }

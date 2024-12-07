@@ -3,8 +3,11 @@ package common
 import (
 	"bufio"
 	"iter"
+	"math"
 	"os"
 	"slices"
+	"strconv"
+	"strings"
 
 	"golang.org/x/exp/constraints"
 )
@@ -46,6 +49,32 @@ func Abs[T constraints.Signed](x T) T {
 	return x
 }
 
-func DeleteClone(slice []int, i int) []int {
+func DeleteClone[T any](slice []T, i int) []T {
 	return slices.Delete(slices.Clone(slice), i, i+1)
+}
+
+func ToInts[T ~string | ~[]byte](ss []T) []int {
+	ints := make([]int, 0, len(ss))
+	for _, s := range ss {
+		ints = append(ints, Must(strconv.Atoi(strings.TrimSpace(string(s)))))
+	}
+	return ints
+}
+
+func Permutations[T any](numChars int, charSet []T) iter.Seq[[]T] {
+	return func(yield func([]T) bool) {
+		perm := make([]T, numChars)
+
+		maxCombinations := math.Pow(float64(len(charSet)), float64(numChars))
+		for i := 0; i < int(maxCombinations); i++ {
+			cur := i
+			for j := 0; j < numChars; j++ {
+				perm[j] = charSet[cur%len(charSet)]
+				cur /= len(charSet)
+			}
+			if !yield(perm) {
+				break
+			}
+		}
+	}
 }
