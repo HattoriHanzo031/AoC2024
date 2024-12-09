@@ -31,6 +31,9 @@ func testPermutations(operands []int, testValue int, operations []operation) boo
 		acc := operands[0]
 		for i, v := range operands[1:] {
 			acc = p[i](acc, v)
+			if acc > testValue {
+				break
+			}
 		}
 		if acc == testValue {
 			return true
