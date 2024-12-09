@@ -9,6 +9,7 @@ use (
 	./D06
 	./D07
 	./D08
+	./D09
 	./common
 	./gpt
 )
