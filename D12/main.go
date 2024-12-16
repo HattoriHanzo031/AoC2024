@@ -47,96 +47,82 @@ func (c coord) add(d coord) coord {
 	return coord{c.x + d.x, c.y + d.y}
 }
 
+type ct struct {
+	c coord
+	t ofType
+}
+
 func main() {
-	scanner := common.FileIter("test_input_2.txt")
-	topo := make(map[coord]rune, 0)
+	scanner := common.FileIter("input.txt")
+	plotMap := make(map[coord]rune, 0)
 	for y, line := range scanner {
 		for x, r := range line {
-			topo[coord{x, y}] = r
+			plotMap[coord{x, y}] = r
 		}
 	}
 
-	totalPrice := 0
+	totalPriceP1 := 0
 	totalPriceP2 := 0
 	visited := make(map[coord]bool, 0)
-	fenceLenP2 := 0
-
-	for cur := range topo {
+	for cur := range plotMap {
 		if visited[cur] {
 			continue
 		}
-		fenceLen := 0
-		plotSize := 0
-		fenceLenP2 = 0
 
-		//fmt.Println("cur:", cur)
-		fences := make(map[coord]ofType, 0)
-		for c, t := range findFence(topo, cur) {
+		fenceLenP1 := 0
+		plotSize := 0
+		fences := make(map[ct]bool, 0)
+		for c, t := range findFence(plotMap, cur) {
 			switch t {
 			case plot:
 				visited[c] = true
 				plotSize++
 			case fenceLeft, fenceRight, fenceUp, fenceDown:
-				fenceLen++
-				fmt.Print("fence:", c, t.String())
-				if !hasConnectedFence(fences, t, c) {
-					fenceLenP2++
-					fmt.Println(" COUNTED")
-				} else {
-					fmt.Println()
-				}
-				fences[c] = t
+				fenceLenP1++
+				fences[ct{c, t}] = true
 			}
 		}
-		testTest := 0
-		for c, t := range fences {
-			if !hasConnectedFence2(fences, t, c) {
-				testTest++
+
+		fenceLenP2 := 0
+		for cct := range fences {
+			if !hasConnectedFence(fences, cct.t, cct.c) {
+				fenceLenP2++
 			}
 		}
-		fmt.Println(string(topo[cur]))
-		fmt.Println("plotSize:", plotSize)
-		fmt.Println("testTest:", testTest)
-		//fmt.Println("fenceLen:", fenceLen)
-		fmt.Println("fenceLenP2:", fenceLenP2)
-		totalPrice += plotSize * fenceLen
-		totalPriceP2 += plotSize * testTest
+
+		//fmt.Println(string(plotMap[cur]), ": plot:", plotSize, "fenceLenP1:", fenceLenP1, "fenceLenP2:", fenceLenP2)
+		totalPriceP1 += plotSize * fenceLenP1
+		totalPriceP2 += plotSize * fenceLenP2
 	}
-	fmt.Println("Result:", totalPrice)
-	fmt.Println("Result P2:", totalPriceP2)
+	fmt.Println("Price P1:", totalPriceP1)
+	fmt.Println("Price P2:", totalPriceP2)
 }
 
 func findFence(topo map[coord]rune, start coord) iter.Seq2[coord, ofType] {
-	type visitFrom struct {
-		visit coord
-		from  ofType
-	}
-
 	plotRune := topo[start]
-	toVisit := []visitFrom{{start, -1}}
+	toVisit := []coord{start}
 	visited := make(map[coord]bool, 0)
 	return func(yield func(coord, ofType) bool) {
 		for len(toVisit) > 0 {
-			newToVisit := make([]visitFrom, 0)
+			newToVisit := make([]coord, 0)
 			for _, current := range toVisit {
-				if topo[current.visit] != plotRune {
-					if !yield(current.visit, current.from) {
-						return
-					}
+				if visited[current] {
 					continue
 				}
+				visited[current] = true
 
-				if visited[current.visit] {
-					continue
-				}
-				visited[current.visit] = true
-
-				if !yield(current.visit, plot) {
+				if !yield(current, plot) {
 					return
 				}
-
 				for _, dir := range []coord{up, down, left, right} {
-					newToVisit = append(newToVisit, visitFrom{current.visit.add(dir), dirToFence(dir)})
+					next := current.add(dir)
+					if topo[next] == plotRune {
+						newToVisit = append(newToVisit, next)
+					} else {
+						if !yield(current, dirToFence(dir)) {
+							return
+						}
+					}
 				}
 			}
 			toVisit = newToVisit
@@ -158,30 +144,16 @@ func dirToFence(dir coord) ofType {
 	return -1
 }
 
-func hasConnectedFence(fences map[coord]ofType, cur ofType, pos coord) bool {
+func hasConnectedFence(fences map[ct]bool, cur ofType, pos coord) bool {
 	switch cur {
 	case fenceUp:
-		return fences[pos.add(left)] == fenceUp || fences[pos.add(right)] == fenceUp
+		return fences[ct{pos.add(left), fenceUp}]
 	case fenceDown:
-		return fences[pos.add(left)] == fenceDown || fences[pos.add(right)] == fenceDown
+		return fences[ct{pos.add(left), fenceDown}]
 	case fenceLeft:
-		return fences[pos.add(up)] == fenceLeft || fences[pos.add(down)] == fenceLeft
+		return fences[ct{pos.add(up), fenceLeft}]
 	case fenceRight:
-		return fences[pos.add(up)] == fenceRight || fences[pos.add(down)] == fenceRight
-	}
-	return false
-}
-
-func hasConnectedFence2(fences map[coord]ofType, cur ofType, pos coord) bool {
-	switch cur {
-	case fenceUp:
-		return fences[pos.add(left)] == fenceUp
-	case fenceDown:
-		return fences[pos.add(left)] == fenceDown
-	case fenceLeft:
-		return fences[pos.add(up)] == fenceLeft
-	case fenceRight:
-		return fences[pos.add(up)] == fenceRight
+		return fences[ct{pos.add(up), fenceRight}]
 	}
 	return false
 }
